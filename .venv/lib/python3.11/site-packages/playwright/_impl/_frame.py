@@ -13,35 +13,47 @@
 # limitations under the License.
 
 import asyncio
-import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Pattern, Set, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Pattern,
+    Sequence,
+    Set,
+    Union,
+    cast,
+)
 
 from pyee import EventEmitter
 
 from playwright._impl._api_structures import AriaRole, FilePayload, Position
-from playwright._impl._api_types import Error
 from playwright._impl._connection import (
     ChannelOwner,
     from_channel,
     from_nullable_channel,
 )
 from playwright._impl._element_handle import ElementHandle, convert_select_option_values
+from playwright._impl._errors import Error
 from playwright._impl._event_context_manager import EventContextManagerImpl
 from playwright._impl._helper import (
     DocumentLoadState,
     FrameNavigatedEvent,
     KeyboardModifier,
+    Literal,
     MouseButton,
     URLMatch,
-    URLMatcher,
     async_readfile,
     locals_to_params,
     monotonic_time,
+    url_matches,
 )
 from playwright._impl._js_handle import (
     JSHandle,
     Serializable,
+    add_source_url_to_script,
     parse_result,
     serialize_argument,
 )
@@ -59,12 +71,7 @@ from playwright._impl._locator import (
 )
 from playwright._impl._network import Response
 from playwright._impl._set_input_files_helpers import convert_input_files
-from playwright._impl._wait_helper import WaitHelper
-
-if sys.version_info >= (3, 8):  # pragma: no cover
-    from typing import Literal
-else:  # pragma: no cover
-    from typing_extensions import Literal
+from playwright._impl._waiter import Waiter
 
 if TYPE_CHECKING:  # pragma: no cover
     from playwright._impl._page import Page
@@ -139,18 +146,18 @@ class Frame(ChannelOwner):
             ),
         )
 
-    def _setup_navigation_wait_helper(
-        self, wait_name: str, timeout: float = None
-    ) -> WaitHelper:
+    def _setup_navigation_waiter(self, wait_name: str, timeout: float = None) -> Waiter:
         assert self._page
-        wait_helper = WaitHelper(self._page, f"frame.{wait_name}")
-        wait_helper.reject_on_event(
-            self._page, "close", Error("Navigation failed because page was closed!")
+        waiter = Waiter(self._page, f"frame.{wait_name}")
+        waiter.reject_on_event(
+            self._page,
+            "close",
+            lambda: cast("Page", self._page)._close_error_with_reason(),
         )
-        wait_helper.reject_on_event(
+        waiter.reject_on_event(
             self._page, "crash", Error("Navigation failed because page crashed!")
         )
-        wait_helper.reject_on_event(
+        waiter.reject_on_event(
             self._page,
             "framedetached",
             Error("Navigating frame was detached!"),
@@ -158,53 +165,52 @@ class Frame(ChannelOwner):
         )
         if timeout is None:
             timeout = self._page._timeout_settings.navigation_timeout()
-        wait_helper.reject_on_timeout(timeout, f"Timeout {timeout}ms exceeded.")
-        return wait_helper
+        waiter.reject_on_timeout(timeout, f"Timeout {timeout}ms exceeded.")
+        return waiter
 
     def expect_navigation(
         self,
         url: URLMatch = None,
-        wait_until: DocumentLoadState = None,
+        waitUntil: DocumentLoadState = None,
         timeout: float = None,
     ) -> EventContextManagerImpl[Response]:
         assert self._page
-        if not wait_until:
-            wait_until = "load"
+        if not waitUntil:
+            waitUntil = "load"
 
         if timeout is None:
             timeout = self._page._timeout_settings.navigation_timeout()
         deadline = monotonic_time() + timeout
-        wait_helper = self._setup_navigation_wait_helper("expect_navigation", timeout)
+        waiter = self._setup_navigation_waiter("expect_navigation", timeout)
 
         to_url = f' to "{url}"' if url else ""
-        wait_helper.log(f"waiting for navigation{to_url} until '{wait_until}'")
-        matcher = (
-            URLMatcher(self._page._browser_context._options.get("baseURL"), url)
-            if url
-            else None
-        )
+        waiter.log(f"waiting for navigation{to_url} until '{waitUntil}'")
 
         def predicate(event: Any) -> bool:
             # Any failed navigation results in a rejection.
             if event.get("error"):
                 return True
-            wait_helper.log(f'  navigated to "{event["url"]}"')
-            return not matcher or matcher.matches(event["url"])
+            waiter.log(f'  navigated to "{event["url"]}"')
+            return url_matches(
+                cast("Page", self._page)._browser_context._options.get("baseURL"),
+                event["url"],
+                url,
+            )
 
-        wait_helper.wait_for_event(
+        waiter.wait_for_event(
             self._event_emitter,
             "navigated",
             predicate=predicate,
         )
 
         async def continuation() -> Optional[Response]:
-            event = await wait_helper.result()
+            event = await waiter.result()
             if "error" in event:
                 raise Error(event["error"])
-            if wait_until not in self._load_states:
+            if waitUntil not in self._load_states:
                 t = deadline - monotonic_time()
                 if t > 0:
-                    await self._wait_for_load_state_impl(state=wait_until, timeout=t)
+                    await self._wait_for_load_state_impl(state=waitUntil, timeout=t)
             if "newDocument" in event and "request" in event["newDocument"]:
                 request = from_channel(event["newDocument"]["request"])
                 return await request.response()
@@ -215,16 +221,17 @@ class Frame(ChannelOwner):
     async def wait_for_url(
         self,
         url: URLMatch,
-        wait_until: DocumentLoadState = None,
+        waitUntil: DocumentLoadState = None,
         timeout: float = None,
     ) -> None:
         assert self._page
-        matcher = URLMatcher(self._page._browser_context._options.get("baseURL"), url)
-        if matcher.matches(self.url):
-            await self._wait_for_load_state_impl(state=wait_until, timeout=timeout)
+        if url_matches(
+            self._page._browser_context._options.get("baseURL"), self.url, url
+        ):
+            await self._wait_for_load_state_impl(state=waitUntil, timeout=timeout)
             return
         async with self.expect_navigation(
-            url=url, wait_until=wait_until, timeout=timeout
+            url=url, waitUntil=waitUntil, timeout=timeout
         ):
             pass
 
@@ -244,24 +251,24 @@ class Frame(ChannelOwner):
             raise Error(
                 "state: expected one of (load|domcontentloaded|networkidle|commit)"
             )
-        wait_helper = self._setup_navigation_wait_helper("wait_for_load_state", timeout)
+        waiter = self._setup_navigation_waiter("wait_for_load_state", timeout)
 
         if state in self._load_states:
-            wait_helper.log(f'  not waiting, "{state}" event already fired')
+            waiter.log(f'  not waiting, "{state}" event already fired')
             # TODO: align with upstream
-            wait_helper._fulfill(None)
+            waiter._fulfill(None)
         else:
 
             def handle_load_state_event(actual_state: str) -> bool:
-                wait_helper.log(f'"{actual_state}" event fired')
+                waiter.log(f'"{actual_state}" event fired')
                 return actual_state == state
 
-            wait_helper.wait_for_event(
+            waiter.wait_for_event(
                 self._event_emitter,
                 "loadstate",
                 handle_load_state_event,
             )
-        await wait_helper.result()
+        await waiter.result()
 
     async def frame_element(self) -> ElementHandle:
         return from_channel(await self._channel.send("frameElement"))
@@ -444,10 +451,8 @@ class Frame(ChannelOwner):
     ) -> ElementHandle:
         params = locals_to_params(locals())
         if path:
-            params["content"] = (
-                (await async_readfile(path)).decode()
-                + "\n//# sourceURL="
-                + str(Path(path))
+            params["content"] = add_source_url_to_script(
+                (await async_readfile(path)).decode(), path
             )
             del params["path"]
         return from_channel(await self._channel.send("addScriptTag", params))
@@ -469,7 +474,7 @@ class Frame(ChannelOwner):
     async def click(
         self,
         selector: str,
-        modifiers: List[KeyboardModifier] = None,
+        modifiers: Sequence[KeyboardModifier] = None,
         position: Position = None,
         delay: float = None,
         button: MouseButton = None,
@@ -485,7 +490,7 @@ class Frame(ChannelOwner):
     async def dblclick(
         self,
         selector: str,
-        modifiers: List[KeyboardModifier] = None,
+        modifiers: Sequence[KeyboardModifier] = None,
         position: Position = None,
         delay: float = None,
         button: MouseButton = None,
@@ -500,7 +505,7 @@ class Frame(ChannelOwner):
     async def tap(
         self,
         selector: str,
-        modifiers: List[KeyboardModifier] = None,
+        modifiers: Sequence[KeyboardModifier] = None,
         position: Position = None,
         timeout: float = None,
         force: bool = None,
@@ -524,18 +529,18 @@ class Frame(ChannelOwner):
     def locator(
         self,
         selector: str,
-        has_text: Union[str, Pattern[str]] = None,
-        has_not_text: Union[str, Pattern[str]] = None,
+        hasText: Union[str, Pattern[str]] = None,
+        hasNotText: Union[str, Pattern[str]] = None,
         has: Locator = None,
-        has_not: Locator = None,
+        hasNot: Locator = None,
     ) -> Locator:
         return Locator(
             self,
             selector,
-            has_text=has_text,
-            has_not_text=has_not_text,
+            has_text=hasText,
+            has_not_text=hasNotText,
             has=has,
-            has_not=has_not,
+            has_not=hasNot,
         )
 
     def get_by_alt_text(
@@ -625,7 +630,7 @@ class Frame(ChannelOwner):
     async def hover(
         self,
         selector: str,
-        modifiers: List[KeyboardModifier] = None,
+        modifiers: Sequence[KeyboardModifier] = None,
         position: Position = None,
         timeout: float = None,
         noWaitAfter: bool = None,
@@ -652,10 +657,10 @@ class Frame(ChannelOwner):
     async def select_option(
         self,
         selector: str,
-        value: Union[str, List[str]] = None,
-        index: Union[int, List[int]] = None,
-        label: Union[str, List[str]] = None,
-        element: Union["ElementHandle", List["ElementHandle"]] = None,
+        value: Union[str, Sequence[str]] = None,
+        index: Union[int, Sequence[int]] = None,
+        label: Union[str, Sequence[str]] = None,
+        element: Union["ElementHandle", Sequence["ElementHandle"]] = None,
         timeout: float = None,
         noWaitAfter: bool = None,
         strict: bool = None,
@@ -665,7 +670,6 @@ class Frame(ChannelOwner):
             dict(
                 selector=selector,
                 timeout=timeout,
-                noWaitAfter=noWaitAfter,
                 strict=strict,
                 force=force,
                 **convert_select_option_values(value, index, label, element),
@@ -684,22 +688,23 @@ class Frame(ChannelOwner):
     async def set_input_files(
         self,
         selector: str,
-        files: Union[str, Path, FilePayload, List[Union[str, Path]], List[FilePayload]],
+        files: Union[
+            str, Path, FilePayload, Sequence[Union[str, Path]], Sequence[FilePayload]
+        ],
         strict: bool = None,
         timeout: float = None,
         noWaitAfter: bool = None,
     ) -> None:
-        params = locals_to_params(locals())
         converted = await convert_input_files(files, self.page.context)
-        if converted["files"] is not None:
-            await self._channel.send(
-                "setInputFiles", {**params, "files": converted["files"]}
-            )
-        else:
-            await self._channel.send(
-                "setInputFilePaths",
-                locals_to_params({**params, **converted, "files": None}),
-            )
+        await self._channel.send(
+            "setInputFiles",
+            {
+                "selector": selector,
+                "strict": strict,
+                "timeout": timeout,
+                **converted,
+            },
+        )
 
     async def type(
         self,
@@ -785,7 +790,6 @@ class Frame(ChannelOwner):
                 position=position,
                 timeout=timeout,
                 force=force,
-                noWaitAfter=noWaitAfter,
                 strict=strict,
                 trial=trial,
             )
@@ -795,7 +799,6 @@ class Frame(ChannelOwner):
                 position=position,
                 timeout=timeout,
                 force=force,
-                noWaitAfter=noWaitAfter,
                 strict=strict,
                 trial=trial,
             )

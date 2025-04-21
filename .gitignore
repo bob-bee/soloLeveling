@@ -1,0 +1,5 @@
+# Ignore output and temp files
+output/
+*.log
+*.tmp
+__pycache__/
