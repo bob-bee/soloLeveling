@@ -6,8 +6,15 @@ from urllib.parse import urljoin
 from config import BASE_URL, OUTPUT_DIR
 import sys
 
+<<<<<<< HEAD
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
+=======
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+
+
+>>>>>>> d480a3cc1e3809edc98da0cc6c6c76a1e655665d
 def fetch_chapter_links(base_url):
     """Fetch all chapter links from the main site page."""
     try:
@@ -31,6 +38,7 @@ def fetch_chapter_links(base_url):
     return sorted(chapter_links)
 
 def save_links_in_folders(chapter_links, output_dir=OUTPUT_DIR):
+<<<<<<< HEAD
     """Create folders for each chapter and save the link into a .txt file in output/txt/."""
     # Create the necessary directories for txt files
     txt_output_dir = os.path.join(output_dir, "txt")
@@ -38,6 +46,16 @@ def save_links_in_folders(chapter_links, output_dir=OUTPUT_DIR):
 
     for number, url in chapter_links:
         file_path = os.path.join(txt_output_dir, f"chapter-{number}.txt")
+=======
+    """Create folders for each chapter and save the link into a .txt file."""
+    os.makedirs(output_dir, exist_ok=True)
+
+    for number, url in chapter_links:
+        folder_path = os.path.join(output_dir, f"chapter_{number}")
+        os.makedirs(folder_path, exist_ok=True)
+
+        file_path = os.path.join(folder_path, f"chapter-{number}.txt")
+>>>>>>> d480a3cc1e3809edc98da0cc6c6c76a1e655665d
         with open(file_path, "w") as f:
             f.write(url)
 
@@ -52,7 +70,12 @@ def main():
         return
 
     save_links_in_folders(chapter_links)
+<<<<<<< HEAD
     print(f"\n🎉 Done! {len(chapter_links)} chapter links saved in '{os.path.join(OUTPUT_DIR, 'txt')}'.")
     
+=======
+    print(f"\n🎉 Done! {len(chapter_links)} chapter links saved in '{OUTPUT_DIR}'.")
+
+>>>>>>> d480a3cc1e3809edc98da0cc6c6c76a1e655665d
 if __name__ == "__main__":
     main()
