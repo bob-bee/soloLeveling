@@ -4,3 +4,48 @@ output/
 *.tmp
 __pycache__/
 *.venv/
+*.egg-info/
+dist/
+build/
+*.egg
+*.whl
+
+# Ignore configuration files
+config.yaml
+settings.json
+
+# Ignore IDE-specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore Python bytecode files
+*.pyc
+*.pyo
+__pycache__/
+*.pyd
+
+# Ignore test output files
+test_output/
+test_results/
+*.xml
+*.json
+
+# Ignore coverage reports
+.coverage
+coverage.xml
+htmlcov/
+
+# Ignore Docker files
+Dockerfile*
+docker-compose.yml
+
+# Ignore virtual environment folders
+venv/
+.env/
+env/
+.venv/
