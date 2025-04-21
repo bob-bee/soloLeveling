@@ -3,4 +3,4 @@ output/
 *.log
 *.tmp
 __pycache__/
-.venv/
+*.venv/
