@@ -48,4 +48,4 @@ docker-compose.yml
 venv/
 .env/
 env/
-.venv/
+.venv/.venv
