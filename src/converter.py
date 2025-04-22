@@ -36,7 +36,7 @@ async def convert_all_pdfs():
     # Iterate through all PDF files in the base directory
     for pdf_file in BASE_PDF_DIR.glob("chapter-*.pdf"):
         chapter_number = pdf_file.stem.split("-")[-1]
-        html_output_path = BASE_HTML_DIR / f"chapter-{chapter_number}.html"
+        html_output_path = BASE_HTML_DIR / f"chapter-{chapter_number}/chapter-{chapter_number}.html"
         tasks.append(convert_pdf_to_html(pdf_file, html_output_path))
 
     # Run all conversion tasks concurrently
