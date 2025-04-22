@@ -13,5 +13,5 @@
       ]
     }
   },
-  "postCreateCommand": "chmod +x .devcontainer/cleanup.sh && .devcontainer/cleanup.sh && sudo apt-get update && sudo apt-get upgrade -y && python -m venv .venv && source .venv/bin/activate && sudo apt-get update && sudo apt-get upgrade -y && pip install --upgrade pip && pip install -r requirements.txt && git add . && git commit -m 'Update dependencies' && git push"
+  "postAttachCommand": "chmod +x .devcontainer/cleanup.sh && .devcontainer/cleanup.sh && sudo apt-get update && sudo apt-get upgrade -y && python3 -m venv .venv && source .venv/bin/activate && sudo apt-get update && sudo apt-get upgrade -y && pip3 install --upgrade pip && pip3 install -r requirements.txt && git add . && git commit -m 'Update dependencies' && git push"
 }
