@@ -29,4 +29,3 @@ python-magic==0.4.27
 PySocks==1.7.1
 wkhtmltopdf
 python-poppler
-
