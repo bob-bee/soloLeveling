@@ -3,16 +3,11 @@ output/
 *.log
 *.tmp
 __pycache__/
-*.venv/
 *.egg-info/
 dist/
 build/
 *.egg
 *.whl
-
-# Ignore configuration files
-config.yaml
-settings.json
 
 # Ignore IDE-specific files
 .idea/

@@ -1,0 +1,13 @@
+.gitattributes
+.gitignore
+README.md
+requirements.txt
+.devcontainer/
+    devcontainer.json
+src/
+    __init__.py
+    browser_check.py
+    config.py
+    converter.py
+    downloader.py
+    url_generator.py

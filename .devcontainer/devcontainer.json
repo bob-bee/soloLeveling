@@ -1,18 +1,17 @@
 {
-    "name": "Solo Leveling Workspace",
-    "image": "mcr.microsoft.com/devcontainers/universal:2",
-    "features": {
-      "ghcr.io/devcontainers/features/python:1": {
-        "version": "3.11"
-      }
-    },
-    "customizations": {
-      "vscode": {
-        "extensions": [
-          "ms-python.python"
-        ]
-      }
-    },
-    "postCreateCommand": "pip install pillow"
-  }
-  
+  "name": "Solo Leveling Workspace",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python"
+      ]
+    }
+  },
+  "postCreateCommand": "chmod +x .devcontainer/cleanup.sh && .devcontainer/cleanup.sh && sudo apt-get update && sudo apt-get upgrade -y && python -m venv .venv && source .venv/bin/activate && sudo apt-get update && sudo apt-get upgrade -y && pip install --upgrade pip && pip install -r requirements.txt && git add . && git commit -m 'Update dependencies' && git push"
+}
