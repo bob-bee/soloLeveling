@@ -31,13 +31,14 @@ def fetch_chapter_links(base_url):
     return sorted(chapter_links)
 
 def save_links_in_folders(chapter_links, output_dir=OUTPUT_DIR):
-    """Create folders for each chapter and save the link into a .txt file in output/txt/."""
-    # Create the necessary directories for txt files
-    txt_output_dir = os.path.join(output_dir, "txt")
-    os.makedirs(txt_output_dir, exist_ok=True)
-
+    """Save the link into a .txt file in output/chapter{number}/info.txt."""
     for number, url in chapter_links:
-        file_path = os.path.join(txt_output_dir, f"chapter-{number}.txt")
+        # Create the base folder for each chapter
+        chapter_folder = os.path.join(output_dir, f"chapter{number}")
+        os.makedirs(chapter_folder, exist_ok=True)
+
+        # Save the link into a .txt file named info.txt inside the chapter folder
+        file_path = os.path.join(chapter_folder, "info.txt")
         with open(file_path, "w") as f:
             f.write(url)
 
@@ -52,7 +53,7 @@ def main():
         return
 
     save_links_in_folders(chapter_links)
-    print(f"\n🎉 Done! {len(chapter_links)} chapter links saved in '{os.path.join(OUTPUT_DIR, 'txt')}'.")
+    print(f"\n🎉 Done! {len(chapter_links)} chapter links saved in '{OUTPUT_DIR}'.")
     
 if __name__ == "__main__":
     main()
