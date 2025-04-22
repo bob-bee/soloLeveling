@@ -13,5 +13,5 @@
       ]
     }
   },
-  "postAttachCommand": "chmod +x .devcontainer/cleanup.sh && .devcontainer/cleanup.sh && sudo apt-get update && sudo apt-get upgrade -y && python3 -m venv .venv && source .venv/bin/activate && sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y libpoppler-cpp-dev && pip3 install --upgrade pip && pip3 install -r requirements.txt && git add . && git commit -m 'Update dependencies' && git push"
+  "postAttachCommand": "chmod +x .devcontainer/cleanup.sh && .devcontainer/cleanup.sh && sudo apt-get update && sudo apt-get upgrade -y && python3 -m venv .venv && source .venv/bin/activate && sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y libpoppler-cpp-dev poppler-utils && pip3 install --upgrade pip && pip3 install -r requirements.txt && git add . && git commit -m 'Update dependencies' && git push"
 }

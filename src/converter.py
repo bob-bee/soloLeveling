@@ -1,6 +1,7 @@
 import os
 import asyncio
 from pathlib import Path
+from shutil import which
 
 BASE_PDF_DIR = Path("/workspaces/soloLeveling/output/pdf")
 BASE_HTML_DIR = Path("/workspaces/soloLeveling/output/html")
@@ -9,6 +10,11 @@ async def convert_pdf_to_html(pdf_path: Path, html_path: Path):
     """
     Convert the PDF file to a single HTML file using pdftohtml.
     """
+    # Check if pdftohtml is installed
+    if not which("pdftohtml"):
+        print("❌ Error: 'pdftohtml' is not installed or not available on PATH.")
+        return
+
     html_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Use -s for single file output and -noframes to prevent extra splits
@@ -34,14 +40,6 @@ async def convert_all_pdfs():
         tasks.append(convert_pdf_to_html(pdf_file, html_output_path))
 
     # Run all conversion tasks concurrently
-    await asyncio.gather(*tasks)
-    tasks = []
-
-    for pdf_file in BASE_PDF_DIR.glob("chapter-*.pdf"):
-        chapter_number = pdf_file.stem.split("-")[-1]
-        html_output_path = BASE_HTML_DIR / f"chapter-{chapter_number}.html"
-        tasks.append(convert_pdf_to_html(pdf_file, html_output_path))
-
     await asyncio.gather(*tasks)
 
 if __name__ == "__main__":
