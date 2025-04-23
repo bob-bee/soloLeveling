@@ -4,14 +4,29 @@
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.11"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
     }
   },
   "customizations": {
     "vscode": {
       "extensions": [
-        "ms-python.python"
+        "ms-python.python",
+        "ms-toolsai.jupyter",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "johnsoncodehk.volar",
+        "quasarframework.quasar-vscode",
+        "eamodio.gitlens",
+        "ritwickdey.LiveServer",
+        "tomoki1207.pdf",
+        "techer.open-in-browser",
+        "bierner.markdown-preview-github-styles",
+        "ms-azuretools.vscode-docker"
       ]
     }
   },
-  "postAttachCommand": "chmod +x .devcontainer/cleanup.sh && .devcontainer/cleanup.sh && sudo apt-get update && sudo apt-get upgrade -y && python3 -m venv .venv && source .venv/bin/activate && sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y libpoppler-cpp-dev poppler-utils && pip3 install --upgrade pip && pip3 install -r requirements.txt && git add . && git commit -m 'Update dependencies' && git push"
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "forwardPorts": [8888, 8000, 5173, 3000]
 }
