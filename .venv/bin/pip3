@@ -1,4 +1,4 @@
-#!/workspaces/soloLeveling/.venv/bin/python
+#!/home/bob-bee/projects/soloLeveling/.venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
