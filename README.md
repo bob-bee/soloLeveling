@@ -1,8 +1,3 @@
-Here is the complete, updated `README.md` file. It matches your exact project structure, documents what every single file inside your `src/` directory does, and provides the step-by-step commands to set up, run, and debug the project.
-
-You can overwrite your current `README.md` with this content:
-
-```markdown
 # Solo Leveling Ad-Free Webtoon Processor
 
 A robust web scraping and automation pipeline designed to extract *Solo Leveling* chapters from webtoon aggregators, strip out annoying trailing advertisement panels, seamlessly stitch the long vertical layouts, and compile them into a beautiful, interactive, self-hosted web viewer.
