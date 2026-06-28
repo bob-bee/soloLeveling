@@ -26,7 +26,8 @@ MERGED_OUTPUT_DIR = os.path.join(OUTPUT_DIR, "merged_panels")
 FINAL_PDF_PATH = os.path.join(OUTPUT_DIR, "solo_leveling_full.pdf")
 
 # URLs and chapters
-BASE_URL = "https://w66.sololevelingthemanga.com/manga/solo-leveling-chapter-{}/"
+BASE_URL = "START_CHAPTER = 0"
+BASE_URL = "https://onlinesololevelingmanga.com/"
 START_CHAPTER = 1
 END_CHAPTER = 10
 

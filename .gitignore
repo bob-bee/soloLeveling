@@ -1,46 +1,49 @@
-# Ignore output and temp files
-output/
-*.log
-*.tmp
-__pycache__/
-*.egg-info/
-dist/
-build/
-*.egg
-*.whl
+# ====================================================================
+# PROJECT PIPELINE REGULATORS (MANGA EXTRACTOR SPECS)
+# ====================================================================
 
-# Ignore IDE-specific files
+# Step 1: Ignore everything inside the output folder completely
+output/*
+
+# Step 2: Un-ignore / allow tracking of specific viewer core engine files
+!output/viewer.html
+
+# ====================================================================
+# STANDARD SYSTEM & ENVIRONMENT IGNORES
+# ====================================================================
+
+# Python bytecode & cache systems
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment wrappers
+.venv/
+.env/
+env/
+
+# IDE files (VS Code / PyCharm / Sublime)
 .idea/
 .vscode/
 *.sublime-project
 *.sublime-workspace
-
-# Ignore Jupyter Notebook checkpoints
 .ipynb_checkpoints/
 
-# Ignore Python bytecode files
-*.pyc
-*.pyo
-__pycache__/
-*.pyd
-
-# Ignore test output files
+# Development artifacts & diagnostic reports
+*.log
+*.tmp
 test_output/
 test_results/
-*.xml
-*.json
-
-# Ignore coverage reports
 .coverage
 coverage.xml
 htmlcov/
 
-# Ignore Docker files
+# Deployment & compilation frames
 Dockerfile*
 docker-compose.yml
-
-# Ignore virtual environment folders
-venv/
-.env/
-env/
-.venv/.venv
+dist/
+build/
+*.egg-info/
+*.egg
+*.whl
